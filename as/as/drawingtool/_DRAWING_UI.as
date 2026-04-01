@@ -61,12 +61,17 @@ var num_currFont_leftMargin:Number = 0; //left margin inside the text field (in 
 var str_currFont_allignment:String = "left";
 //the text format (updated)
 var tf_format:TextFormat;
-//the field added to the canvas
+//the field added to the canvas (kept as live references to the active block's tf/container)
 var canvas_textField:TextField = new TextField();
 var canvas_textField_container:MovieClip = new MovieClip(); //text is placed in a container so it can get dragged around
+//multi-block text support
+var arr_textBlocks:Array = new Array(); //all pending text blocks (committed to canvas on Done)
+var activeBlock:Object = null; //the currently selected/editing block
 //programmatic margin UI controls (created at setup time, added to arr_ui_tools_textTool)
 var txt_textTool_margin:TextField = new TextField();
 var txt_textTool_margin_label:TextField = new TextField();
+//programmatic "Add Another" button (created at setup time, pushed to arr_ui_tools_textTool)
+var btn_textTool_addAnother:TextField = new TextField();
 //////////////
 
 //////////////COLOR VALUES (scrubber)
@@ -328,6 +333,7 @@ function event_subtools_previous(event:MouseEvent){
 ////////////TEXT & FONT////////////
 
 function updateFormat(txtField:TextField){
+	if(activeBlock == null) return;
 	//
 	tf_format = new TextFormat();
 	tf_format.font = currFont.fontName;
@@ -336,6 +342,8 @@ function updateFormat(txtField:TextField){
 	tf_format.align = str_currFont_allignment;
 	tf_format.color = pen_color;
 	tf_format.leftMargin = num_currFont_leftMargin;
+	//keep the active block's color in sync with the global pen color
+	activeBlock.color = pen_color;
 	//
 	//
 	txtField.wordWrap = true;
@@ -451,6 +459,7 @@ function event_setFont(event:MouseEvent){
 	if(currFont == null){
 		currFont = arr_allfonts[Math.ceil(Math.random()*arr_allfonts.length)-1];
 	};
+	if(activeBlock != null) activeBlock.font = currFont;
 	//also update the field over there >>
 	updateFormat(canvas_textField);
 };
@@ -467,6 +476,7 @@ function event_setAllign(event:MouseEvent){
 	if(clip_name == "btn_textTool_center"){
 		str_currFont_allignment = "center";
 	};
+	if(activeBlock != null) activeBlock.alignment = str_currFont_allignment;
 	//update now
 	updateFormat(canvas_textField);
 };
@@ -482,6 +492,7 @@ function event_fontsize_ONCHANGE(event:Event){
 	if(num_currFont_size <= 1){
 		num_currFont_size = 1;
 	};
+	if(activeBlock != null) activeBlock.size = num_currFont_size;
 	//
 	updateFormat(canvas_textField);
 };
@@ -493,6 +504,7 @@ function event_fontwidth_ONCHANGE(event:Event){
 	if (isNaN(num_currFont_width)){
 		num_currFont_width = 300;
 	};
+	if(activeBlock != null) activeBlock.width = num_currFont_width;
 	//
 	updateFormat(canvas_textField);
 };
@@ -504,6 +516,7 @@ function event_fontrotation_ONCHANGE(event:Event){
 	if (isNaN(num_currFont_rotation)){
 		num_currFont_rotation = 0;
 	};
+	if(activeBlock != null) activeBlock.rotation = num_currFont_rotation;
 	//
 	updateFormat(canvas_textField);
 }
@@ -516,6 +529,7 @@ function event_fontmargin_ONCHANGE(event:Event){
 	if(num_currFont_leftMargin < 0){
 		num_currFont_leftMargin = 0;
 	};
+	if(activeBlock != null) activeBlock.leftMargin = num_currFont_leftMargin;
 	updateFormat(canvas_textField);
 }
 
@@ -524,6 +538,7 @@ function event_input_ONCHANGE(event:Event){
 	//update
 	updateFormat(canvas_textField);
 	canvas_textField.text = txt_textTool_input.text;
+	if(activeBlock != null) activeBlock.text = txt_textTool_input.text;
 	mc_textTool_about.visible = false;
 	//
 };
@@ -551,14 +566,14 @@ function visible_TextUI(bool_visible:Boolean){
 	}
 };
 
-//dragging text into position
+//dragging text into position — uses event.currentTarget so any block's container works
 function event_canvasText_startDrag(event:MouseEvent){
-	//
-	event.currentTarget.startDrag(false, new Rectangle(
-			  -canvas_textField_container.width,
-			  -canvas_textField_container.height,
-			  mc_draw.width + canvas_textField_container.width,
-			  mc_draw.height + canvas_textField_container.height
+	var target:MovieClip = event.currentTarget as MovieClip;
+	target.startDrag(false, new Rectangle(
+			  -target.width,
+			  -target.height,
+			  mc_draw.width + target.width,
+			  mc_draw.height + target.height
 		   )
 	);
 };
@@ -567,19 +582,110 @@ function event_canvasText_stopDrag(event:MouseEvent){
 	event.currentTarget.stopDrag();
 }
 
-function event_text_done(event:MouseEvent){
-	//trace("add text here");
-	//trace("remove all");
-	//trace("close");
-	//draw_textField();
+//create a new text block, add it to the canvas, and make it the active block
+function addNewBlock():void {
+	var block:Object = {};
+	block.tf = new TextField();
+	block.container = new MovieClip();
+	block.size = num_currFont_size;
+	block.width = num_currFont_width;
+	block.rotation = num_currFont_rotation;
+	block.leftMargin = num_currFont_leftMargin;
+	block.alignment = str_currFont_allignment;
+	block.color = pen_color;
+	block.font = currFont;
+	block.text = "";
 	//
-	
+	block.container.addChild(block.tf);
+	block.container.x = 0;
+	block.container.y = 0;
+	mc_draw.addChild(block.container);
+	//per-block drag and selection listeners
+	block.container.addEventListener(MouseEvent.MOUSE_DOWN, event_canvasText_startDrag);
+	block.container.addEventListener(MouseEvent.MOUSE_UP, event_canvasText_stopDrag);
+	block.container.addEventListener(MouseEvent.MOUSE_UP, event_selectBlock);
+	//
+	arr_textBlocks.push(block);
+	//update global references so all existing code targets this block
+	canvas_textField = block.tf;
+	canvas_textField_container = block.container;
+	activeBlock = block;
+	//
+	updateFormat(canvas_textField);
+	canvas_textField.text = "";
+}
+
+//select an existing block by clicking its container
+function event_selectBlock(event:MouseEvent):void {
+	var clickedContainer:MovieClip = event.currentTarget as MovieClip;
+	for(var i:Number = 0; i < arr_textBlocks.length; i++) {
+		if(arr_textBlocks[i].container == clickedContainer) {
+			selectBlock(arr_textBlocks[i]);
+			return;
+		}
+	}
+}
+
+//make a block the active one: update global refs, highlight it, and load its values into the UI
+function selectBlock(block:Object):void {
+	//clear highlight on previously active block
+	if(activeBlock != null && activeBlock != block) {
+		activeBlock.container.graphics.clear();
+	}
+	activeBlock = block;
+	canvas_textField = block.tf;
+	canvas_textField_container = block.container;
+	//draw selection highlight
+	block.container.graphics.clear();
+	block.container.graphics.lineStyle(1, 0xFF0000, 0.7);
+	block.container.graphics.drawRect(0, 0, block.tf.width, block.tf.height);
+	//load saved values into UI
+	num_currFont_size = block.size;
+	num_currFont_width = block.width;
+	num_currFont_rotation = block.rotation;
+	num_currFont_leftMargin = block.leftMargin;
+	str_currFont_allignment = block.alignment;
+	currFont = block.font;
+	pen_color = block.color;
+	txt_textTool_size.text = String(block.size);
+	txt_textTool_width.text = String(block.width);
+	txt_textTool_rotation.text = String(block.rotation);
+	txt_textTool_margin.text = String(block.leftMargin);
+	txt_textTool_input.text = block.text;
+}
+
+//commit all pending blocks to the canvas bitmap (called from Done)
+function commitAllTextBlocks():void {
+	for(var i:Number = 0; i < arr_textBlocks.length; i++) {
+		draw_textFieldFromBlock(arr_textBlocks[i]);
+	}
+}
+
+//add a fresh new block without closing the text tool (keeps existing blocks on canvas)
+function event_text_addAnother(event:MouseEvent):void {
+	//remove selection highlight from current block
+	if(activeBlock != null) {
+		activeBlock.container.graphics.clear();
+	}
+	//reset UI to defaults for the new block
+	num_currFont_size = 25;
+	num_currFont_width = 300;
+	num_currFont_rotation = 0;
+	num_currFont_leftMargin = 0;
+	str_currFont_allignment = "left";
+	txt_textTool_size.text = String(num_currFont_size);
+	txt_textTool_width.text = String(num_currFont_width);
+	txt_textTool_rotation.text = String(num_currFont_rotation);
+	txt_textTool_margin.text = String(num_currFont_leftMargin);
+	txt_textTool_input.text = "Write your text here...";
+	addNewBlock();
+}
+
+function event_text_done(event:MouseEvent){
 	//update undo
 	update_after_draw();
-	
-	//
-	draw_textField();
-	
+	//draw all pending blocks to the canvas
+	commitAllTextBlocks();
 	//
 	text_close();
 };
@@ -588,7 +694,7 @@ function event_text_cancel(event:MouseEvent){
 	text_close();
 };
 
-//close functionality called in both buttons (done and cancel)
+//close the text tool: remove all block containers from canvas and reset state
 function text_close(){
 	//reset to pencil
 	set_pencil_tool();
@@ -597,10 +703,18 @@ function text_close(){
 	mc_popup_background_2.gotoAndPlay("close");
 	visible_TextUI(false);
 	event_positionColorPicker_DEFAULT();
-	//
-	canvas_textField_container.removeChild(canvas_textField);
-	mc_draw.removeChild(canvas_textField_container);
-	//
+	//remove every pending block from the canvas
+	for(var i:Number = 0; i < arr_textBlocks.length; i++) {
+		var block:Object = arr_textBlocks[i];
+		if(mc_draw.contains(block.container)) {
+			mc_draw.removeChild(block.container);
+		}
+	}
+	arr_textBlocks = new Array();
+	activeBlock = null;
+	//reset global references to fresh (unused) objects
+	canvas_textField = new TextField();
+	canvas_textField_container = new MovieClip();
 }
 
 function event_text(event: MouseEvent) {
@@ -612,28 +726,19 @@ function event_text(event: MouseEvent) {
 	visible_TextUI(true);
 	mc_popup_background_2.gotoAndPlay("open");
 	event_positionColorPicker_DOWN();
-	//add a text field over canvas
-	mc_draw.addChild(canvas_textField_container);
-	canvas_textField_container.addChild(canvas_textField);
 	//
-	//
-	canvas_textField.text = "";
-	canvas_textField.width = num_currFont_width;
-	//start at the canvas origin so there is no forced gap; user can drag to any position
-	canvas_textField_container.x = 0;
-	canvas_textField_container.y = 0;
-	//
-	//reset here to avoid issues of font going off screen if it saves larger/weirder values
+	//reset defaults for the first new block
 	num_currFont_size = 25;
 	num_currFont_width = 300;
 	num_currFont_rotation = 0;
 	num_currFont_leftMargin = 0;
+	str_currFont_allignment = "left";
 	txt_textTool_size.text = String(num_currFont_size);
 	txt_textTool_width.text = String(num_currFont_width);
 	txt_textTool_rotation.text = String(num_currFont_rotation);
 	txt_textTool_margin.text = String(num_currFont_leftMargin);
 	txt_textTool_input.text = "Write your text here...";
-	updateFormat(canvas_textField);
+	addNewBlock();
 };
 
 //////////////

@@ -168,6 +168,22 @@ txt_textTool_margin.border = true;
 setup_numberDecimal_txt(txt_textTool_margin, num_currFont_leftMargin);
 addChild(txt_textTool_margin);
 txt_textTool_margin.addEventListener(Event.CHANGE, event_fontmargin_ONCHANGE);
+//"Add Another" button: positioned below the DONE button
+btn_textTool_addAnother.type = TextFieldType.DYNAMIC;
+btn_textTool_addAnother.selectable = false;
+btn_textTool_addAnother.mouseEnabled = true;
+btn_textTool_addAnother.buttonMode = true;
+btn_textTool_addAnother.background = true;
+btn_textTool_addAnother.backgroundColor = 0xFFFFFF;
+btn_textTool_addAnother.border = true;
+btn_textTool_addAnother.text = "+ add another";
+btn_textTool_addAnother.x = btn_textTool_DONE.x;
+btn_textTool_addAnother.y = btn_textTool_DONE.y + btn_textTool_DONE.height + 4;
+btn_textTool_addAnother.width = btn_textTool_DONE.width;
+btn_textTool_addAnother.height = btn_textTool_DONE.height;
+addChild(btn_textTool_addAnother);
+btn_textTool_addAnother.addEventListener(MouseEvent.MOUSE_UP, event_text_addAnother);
+arr_ui_tools_textTool.push(btn_textTool_addAnother);
 //selecting a font from the list
 txt_font_01.addEventListener(MouseEvent.MOUSE_UP, event_setFont);
 txt_font_02.addEventListener(MouseEvent.MOUSE_UP, event_setFont);
@@ -179,9 +195,7 @@ txt_font_07.addEventListener(MouseEvent.MOUSE_UP, event_setFont);
 //scroll through fonts (up or down)
 btn_textTool_fonts_UP.addEventListener(MouseEvent.MOUSE_UP, event_prevFontList);
 btn_textTool_fonts_DOWN.addEventListener(MouseEvent.MOUSE_UP, event_nextFontList);
-//repositioning the text
-canvas_textField_container.addEventListener(MouseEvent.MOUSE_DOWN, event_canvasText_startDrag);
-canvas_textField_container.addEventListener(MouseEvent.MOUSE_UP, event_canvasText_startDrag);
+//drag listeners are now added per-block inside addNewBlock()
 //update font list on first run
 updateFontList();
 //////////////////////////////////////////////////////////////////

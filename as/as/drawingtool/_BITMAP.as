@@ -239,7 +239,22 @@ function draw_textField() {
 	bmd.dispose();
 };
 
-//draw imported image into the canvas
+//draw a specific text block to canvas (used when committing multiple blocks)
+function draw_textFieldFromBlock(block:Object):void {
+	var bool_quality:Boolean = (block.rotation != 0);
+	//must pass entire draw region otherwise you get cut off
+	var bmd:BitmapData = new BitmapData(mc_draw.width + stage.stageWidth, mc_draw.height + stage.stageHeight, true, 0);
+	bmd.draw(block.container, null, null, null, null, bool_quality);
+	//
+	var mat:Matrix = new Matrix();
+	mat.rotate(degreesToRadians(block.rotation));
+	mat.translate(block.container.x, block.container.y);
+	//
+	canvasBitmapData.draw(bmd, mat, null, null, null, bool_quality);
+	bmd.dispose();
+}
+
+
 function draw_import_fill(){
 	//
 	update_after_draw();
