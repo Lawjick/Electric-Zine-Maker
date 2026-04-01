@@ -250,11 +250,15 @@ function event_pencil(event:MouseEvent){
 	show_scrubber_alpha();
 };
 
-function event_erase(event:MouseEvent){
+function _setEraser(){
 	pen_color = 0xFFFFFF;
 	pen_alpha = 100;
 	set_tool("ERASER", btn_erase);
 	show_scrubber();
+};
+
+function event_erase(event:MouseEvent){
+	_setEraser();
 };
 
 //////////////
@@ -4669,6 +4673,40 @@ function event_save_panel(event:MouseEvent){
 
 /////////////KEYBOARD SHORTCUTS//////////////
 
+// event.keyCode is used here (not event.charCode) so that shortcuts work for both
+// lowercase and uppercase letters. For example, keyCode 69 fires for both 'e' and 'E',
+// whereas charCode would give 101 for 'e' and 69 for 'E', causing lowercase keys to be missed.
+function event_keyDown(event:KeyboardEvent){
+	// don't trigger shortcuts when a text input field has focus
+	if(stage.focus is TextField && (stage.focus as TextField).type == TextFieldType.INPUT){
+		return;
+	}
+	//
+	switch(event.keyCode){
+		case Keyboard.E:
+			_setEraser();
+			break;
+		case Keyboard.P:
+			set_pencil_tool();
+			break;
+		case Keyboard.Z:
+			// ctrlKey maps to Cmd on Mac in Flash, and Ctrl on Windows
+			if(event.ctrlKey){
+				if(event.shiftKey){
+					_redo();
+				}else{
+					_undo();
+				}
+			}
+			break;
+		case Keyboard.LEFT:
+			_subtools_previous();
+			break;
+		case Keyboard.RIGHT:
+			_subtools_next();
+			break;
+	}
+};
 
 /////////////MISC//////////////
 

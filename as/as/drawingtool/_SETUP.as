@@ -785,6 +785,8 @@ mc_setting_drawandfill.mc_col_fill.addEventListener(MouseEvent.MOUSE_UP, event_d
 
 //////////////////////////////////////////////////////////////////
 
+//KEYBOARD SHORTCUTS
+stage.addEventListener(KeyboardEvent.KEY_DOWN, event_keyDown);
 
 //
 
