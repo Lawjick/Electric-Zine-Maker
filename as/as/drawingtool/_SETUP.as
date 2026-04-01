@@ -149,6 +149,25 @@ btn_textTool_center.addEventListener(MouseEvent.MOUSE_UP, event_setAllign);
 txt_textTool_size.addEventListener(Event.CHANGE, event_fontsize_ONCHANGE);
 txt_textTool_width.addEventListener(Event.CHANGE, event_fontwidth_ONCHANGE);
 txt_textTool_rotation.addEventListener(Event.CHANGE, event_fontrotation_ONCHANGE);
+//margin: programmatically created input, positioned to the right of the rotation input
+txt_textTool_margin_label.selectable = false;
+txt_textTool_margin_label.mouseEnabled = false;
+txt_textTool_margin_label.x = mc_textTool_rotation.x + mc_textTool_rotation.width + 8;
+txt_textTool_margin_label.y = mc_textTool_rotation.y;
+txt_textTool_margin_label.width = mc_textTool_rotation.width;
+txt_textTool_margin_label.height = mc_textTool_rotation.height;
+txt_textTool_margin_label.text = "margin:";
+addChild(txt_textTool_margin_label);
+//
+txt_textTool_margin.type = TextFieldType.INPUT;
+txt_textTool_margin.x = mc_textTool_rotation.x + mc_textTool_rotation.width + 8;
+txt_textTool_margin.y = txt_textTool_rotation.y;
+txt_textTool_margin.width = txt_textTool_rotation.width;
+txt_textTool_margin.height = txt_textTool_rotation.height;
+txt_textTool_margin.border = true;
+setup_numberDecimal_txt(txt_textTool_margin, num_currFont_leftMargin);
+addChild(txt_textTool_margin);
+txt_textTool_margin.addEventListener(Event.CHANGE, event_fontmargin_ONCHANGE);
 //selecting a font from the list
 txt_font_01.addEventListener(MouseEvent.MOUSE_UP, event_setFont);
 txt_font_02.addEventListener(MouseEvent.MOUSE_UP, event_setFont);

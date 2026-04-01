@@ -10,7 +10,7 @@ var arr_ui_tools:Array = new Array(btn_goldfish, btn_rainbowpaint, btn_gifbrush,
 //array of tools for pattern spray (show/hide)
 var arr_ui_tools_patternspray:Array = new Array(btn_patternspray_back, mc_patternspray_about, mc_patternspray_settings, btn_patternspray_rotation, btn_patternspray_size, btn_patternspray_image, btn_patternspray_clear, mc_patternspray_outline, mc_draw_spray);
 //array of all the tools in the font tool (add text)
-var arr_ui_tools_textTool:Array = new Array(txt_textTool_rotation, mc_textTool_rotation, btn_textTool_left, btn_textTool_right, btn_textTool_center, mc_textTool_about, mc_textTool_write, txt_textTool_input, mc_textTool_input, btn_textTool_input_UP, btn_textTool_input_DOWN, mc_textTool_settings, mc_textTool_settingsTxt, txt_textTool_size, mc_textTool_size, txt_textTool_width, mc_textTool_width, mc_textTool_settingsTxt, btn_textTool_DONE, btn_textTool_CANCEL, mc_textTool_fonts, btn_textTool_fonts_UP, btn_textTool_fonts_DOWN, mc_textTool_fonts_scrollbar, mc_textTool_fonts_back, txt_font_01, txt_font_02, txt_font_03, txt_font_04, txt_font_05, txt_font_06, txt_font_07);
+var arr_ui_tools_textTool:Array = new Array(txt_textTool_rotation, mc_textTool_rotation, btn_textTool_left, btn_textTool_right, btn_textTool_center, mc_textTool_about, mc_textTool_write, txt_textTool_input, mc_textTool_input, btn_textTool_input_UP, btn_textTool_input_DOWN, mc_textTool_settings, mc_textTool_settingsTxt, txt_textTool_size, mc_textTool_size, txt_textTool_width, mc_textTool_width, mc_textTool_settingsTxt, btn_textTool_DONE, btn_textTool_CANCEL, mc_textTool_fonts, btn_textTool_fonts_UP, btn_textTool_fonts_DOWN, mc_textTool_fonts_scrollbar, mc_textTool_fonts_back, txt_font_01, txt_font_02, txt_font_03, txt_font_04, txt_font_05, txt_font_06, txt_font_07, txt_textTool_margin, txt_textTool_margin_label);
 //tools for the import image
 var arr_ui_tools_importImage:Array = new Array(btn_importAnother, btn_image_CANCEL, btn_image_DONE, mc_importimage_about, btn_importimage_import01, btn_importimage_import02, btn_importimage_width, btn_importimage_height, btn_importimage_center, btn_importimage_topleft, btn_importimage_topright, btn_importimage_bottomleft, btn_importimage_bottomright);
 
@@ -57,12 +57,16 @@ try{
 var num_currFont_width:Number = 300;
 var num_currFont_rotation:Number = 0;
 var num_currFont_size:Number = 25;
+var num_currFont_leftMargin:Number = 0; //left margin inside the text field (in pixels)
 var str_currFont_allignment:String = "left";
 //the text format (updated)
 var tf_format:TextFormat;
 //the field added to the canvas
 var canvas_textField:TextField = new TextField();
 var canvas_textField_container:MovieClip = new MovieClip(); //text is placed in a container so it can get dragged around
+//programmatic margin UI controls (created at setup time, added to arr_ui_tools_textTool)
+var txt_textTool_margin:TextField = new TextField();
+var txt_textTool_margin_label:TextField = new TextField();
 //////////////
 
 //////////////COLOR VALUES (scrubber)
@@ -331,6 +335,7 @@ function updateFormat(txtField:TextField){
 	tf_format.size = num_currFont_size;
 	tf_format.align = str_currFont_allignment;
 	tf_format.color = pen_color;
+	tf_format.leftMargin = num_currFont_leftMargin;
 	//
 	//
 	txtField.wordWrap = true;
@@ -503,6 +508,17 @@ function event_fontrotation_ONCHANGE(event:Event){
 	updateFormat(canvas_textField);
 }
 
+function event_fontmargin_ONCHANGE(event:Event){
+	num_currFont_leftMargin = Number(txt_textTool_margin.text);
+	if (isNaN(num_currFont_leftMargin)){
+		num_currFont_leftMargin = 0;
+	};
+	if(num_currFont_leftMargin < 0){
+		num_currFont_leftMargin = 0;
+	};
+	updateFormat(canvas_textField);
+}
+
 //change the text on input update
 function event_input_ONCHANGE(event:Event){
 	//update
@@ -603,16 +619,19 @@ function event_text(event: MouseEvent) {
 	//
 	canvas_textField.text = "";
 	canvas_textField.width = num_currFont_width;
-	canvas_textField_container.x = 100;
-	canvas_textField_container.y = 100;
+	//start at the canvas origin so there is no forced gap; user can drag to any position
+	canvas_textField_container.x = 0;
+	canvas_textField_container.y = 0;
 	//
 	//reset here to avoid issues of font going off screen if it saves larger/weirder values
 	num_currFont_size = 25;
 	num_currFont_width = 300;
 	num_currFont_rotation = 0;
+	num_currFont_leftMargin = 0;
 	txt_textTool_size.text = String(num_currFont_size);
 	txt_textTool_width.text = String(num_currFont_width);
 	txt_textTool_rotation.text = String(num_currFont_rotation);
+	txt_textTool_margin.text = String(num_currFont_leftMargin);
 	txt_textTool_input.text = "Write your text here...";
 	updateFormat(canvas_textField);
 };
