@@ -105,6 +105,7 @@ mc_slider.mc_knob.addEventListener(MouseEvent.MOUSE_DOWN, event_scrubber_DOWN);
 mc_slider.mc_knob.addEventListener(MouseEvent.MOUSE_UP, event_scrubber_UP);
 stage.addEventListener(MouseEvent.MOUSE_UP, event_scrubber_UP);
 stage.addEventListener(MouseEvent.MOUSE_MOVE, event_scrubber_MOVE);
+stage.addEventListener(KeyboardEvent.KEY_DOWN, event_keyboard_shortcut);
 
 //setup smudge tool
 init_smudge();

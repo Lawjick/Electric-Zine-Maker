@@ -4669,6 +4669,18 @@ function event_save_panel(event:MouseEvent){
 
 /////////////KEYBOARD SHORTCUTS//////////////
 
+function event_keyboard_shortcut(event:KeyboardEvent){
+	// skip when a text input field has focus so native text copy/paste still works
+	if (stage.focus is TextField) return;
+	//
+	if (event.ctrlKey || event.commandKey) {
+		if (event.keyCode == Keyboard.C) {
+			saveBitmapToClipboard(canvasBitmapData);
+		} else if (event.keyCode == Keyboard.V) {
+			paste_bitmap();
+		}
+	}
+};
 
 /////////////MISC//////////////
 
